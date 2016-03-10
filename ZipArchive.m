@@ -299,7 +299,8 @@
 	}
     
 	const char* password = [_password cStringUsingEncoding:NSASCIIStringEncoding];
-	
+    NSString* unzipToAbsPath = [path stringByStandardizingPath];
+    
 	do{
         @autoreleasepool {
             if( [_password length]==0 )
@@ -338,6 +339,15 @@
                 strPath = [strPath stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
             }
             NSString* fullPath = [path stringByAppendingPathComponent:strPath];
+            
+            NSString* absPath = [fullPath stringByStandardizingPath];
+            // absPath should be a subpath (substring) of unzipToAbsPath
+            // don't want files being extracted outside of unzip directory
+            if (![absPath hasPrefix:unzipToAbsPath]) {
+                [self OutputErrorMessage:@"Attempting to extract file outside of unzip directory - not allowed"];
+                success = NO;
+                break;
+            }
             
             if( isDirectory )
                 [_fileManager createDirectoryAtPath:fullPath withIntermediateDirectories:YES attributes:nil error:nil];

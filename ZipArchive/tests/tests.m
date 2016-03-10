@@ -127,6 +127,46 @@ const NSUInteger NUM_FILES = 10;
 }
 
 
+- (void)testExpandZipOutsideDirectory
+{
+    // attempt to unzip outside of directory
+    
+    chdir("/tmp");
+    _files = [self createRandomFiles:1];
+    NSLog(@"Files in diff location: %@", _files);
+    _zipFile1 = [self createZipArchiveWithFiles:_files];
+    
+    // create the zip
+    ZipArchive* zip = [[ZipArchive alloc] init];
+    char tempName[1000];
+    strcpy(tempName, "/tmp/ziptest-XXXXXXXX");
+    mkstemp(tempName);
+    BOOL ok;
+    NSString* zipPath = [NSString stringWithFormat:@"%s.zip", tempName];
+    ok = [zip CreateZipFile2:zipPath];
+    XCTAssertTrue(ok, @"created zip file");
+    
+    for (NSString* file in _files) {
+        ok = [zip addFileToZip:file newname:@"test/../../test1"];
+        XCTAssertTrue(ok, @"added file to zip archive");
+    }
+    ok = [zip CloseZipFile2];
+    
+    [zip UnzipOpenFile:zipPath];
+    NSArray* contents = [zip getZipFileContents];
+    XCTAssertTrue(contents && contents.count == _files.count, @"zip files has right number of contents");
+    NSString* outputDir = [self tempDir];
+    XCTAssertFalse([zip UnzipFileTo:outputDir overWrite:YES]);
+    
+    // double check they haven't been created
+    NSString* pathToFile = [outputDir stringByAppendingPathComponent:contents[0]];
+    NSString* absPathToFile = [pathToFile stringByStandardizingPath];
+    
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    XCTAssertFalse([fileManager fileExistsAtPath:absPathToFile]);
+    
+}
+
 -(void) ErrorMessage:(NSString*) msg
 {
     _errorCount += 1;
