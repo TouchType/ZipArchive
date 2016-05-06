@@ -338,7 +338,7 @@
             {// contains a path
                 strPath = [strPath stringByReplacingOccurrencesOfString:@"\\" withString:@"/"];
             }
-            NSString* fullPath = [path stringByAppendingPathComponent:strPath];
+            NSString* fullPath = [unzipToAbsPath stringByAppendingPathComponent:strPath];
             
             NSString* absPath = [fullPath stringByStandardizingPath];
             // absPath should be a subpath (substring) of unzipToAbsPath
